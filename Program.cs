@@ -2,42 +2,54 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+/// <summary>
+/// Main program class that orchestrates the web scraping and data extraction process.
+/// </summary>
 class Program
 {
+    /// <summary>
+    /// Entry point of the application.
+    /// Initializes components and runs the data collection process.
+    /// </summary>
     static async Task Main(string[] args)
     {
-        // Инициализация компонентов
-        var dataKeeper = new DataKeeper();
-        var linkFilter = new LinkFilter(new List<string> { "example.com" });
-        var linkKeeper = new LinkKeeper(linkFilter);
-        var linkProvider = new LinkProvider(linkKeeper);
-        var dataProvider = new DataProvider(linkProvider);
-        var linkExtractor = new LinkExtractor(linkKeeper);
+        // Initialize core components
+        var dataKeeper = new DataKeeper(); // Stores extracted data
+        var linkFilter = new LinkFilter(new List<string> { "example.com" }); // Filters links by domain
+        var linkKeeper = new LinkKeeper(linkFilter); // Manages discovered links
+        var linkProvider = new LinkProvider(linkKeeper); // Provides links for processing
+        var dataProvider = new DataProvider(linkProvider); // Fetches HTML content
+        var linkExtractor = new LinkExtractor(linkKeeper); // Extracts new links from HTML
 
-        // Схема для DataExtractor
+        // Define data extraction schema
+        // This schema specifies what data to extract and where to find it
         var schema = new
         {
             schemaVersion = "V0",
             documentSchema = new[]
             {
-                new { name = "title", cssSelector = "/html/body/div/h1" },
-                new { name = "field", cssSelector = "/html/body/div/p" },
+                new { name = "title", cssSelector = "/html/body/div/h1" }, // Extracts page title
+                new { name = "field", cssSelector = "/html/body/div/p" }, // Extracts paragraph content
             }
         };
-        var dataExtractor = new DataExtractor(dataKeeper, schema);
+        var dataExtractor = new DataExtractor(dataKeeper, schema); // Extracts data based on schema
 
-        // Начальная ссылка для сбора данных
+        // Add initial URL to start the crawling process
         linkKeeper.AddLinks(new List<string> { "https://example.com" });
 
-        // Основной цикл сбора данных
-        for (int i = 0; i < 3; i++) // Ограничим количество итераций для примера
+        // Main data collection loop
+        // Processes a limited number of iterations for demonstration
+        for (int i = 0; i < 3; i++)
         {
+            // Fetch HTML content from URLs
             var data = await dataProvider.ProvideDataAsync();
+            
+            // Extract new links and structured data from HTML
             linkExtractor.Process(data);
             dataExtractor.Process(data);
         }
 
-        // Вывод собранных данных
+        // Display collected data
         Console.WriteLine("Сollected data:");
         foreach (var item in dataKeeper.Data)
         {
